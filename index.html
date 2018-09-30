@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>TestMap</title>
+    <link rel="stylesheet" type="text/css" href="style.css" />
+</head>
+<script src="http://localhost:8090/vue.js"></script>
+
+<body>
+    <div class="top-nav">
+        {{ mes }}
+        <!--
+            现在我们为每个 todo-item 提供 todo 对象
+            todo 对象是变量，即其内容可以是动态的。
+            我们也需要为每个组件提供一个“key”，稍后再
+            作详细解释。
+        -->
+        <input v-model="mes0" type="text">
+        <todo-item v-for="item in groceryList" v-bind:todo="item" v-bind:key="item.id">
+        </todo-item>
+    </div>
+    <div class="mainbox">
+        <div class="left-nav"></div>
+        <div id="viewDiv"></div>
+    </div>
+</body>
+<script>
+    Vue.component('todo-item', {
+        props: ['todo'],
+        template: '<li>{{ todo.text }}</li>'
+    })
+    var vm = new Vue({
+        el: '.top-nav',
+        data: {
+            mes: 'hello world',
+            mes0: 'hello',
+            mes1: 'world',
+            groceryList: [
+                { id: 0, text: '吃的1' },
+                { id: 1, text: '吃的2' }
+            ]
+        },
+        watch: {
+            mes0: function (val) {
+                this.mes = val + ' ' + this.mes1;
+            },
+            mes1: function (val) {
+                this.mes = this.mes0 + ' ' + val;
+            }
+        }
+    })
+    let log = console.log.bind(console);
+    class foo {
+        constructor() {
+            console.log('this is fun');
+            // foo1.call(this, p);
+        }
+    }
+    class foo1 extends foo {
+        constructor(p1) {
+            super(p1);
+            console.log('this is foo1 constructor ' + p1);
+        }
+    }
+    let a = new foo();
+    let a1 = new foo1();
+    // log(foo);
+    log(a1.__proto__);
+</script>
+</html>
