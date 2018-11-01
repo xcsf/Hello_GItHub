@@ -4,4 +4,4 @@
 - ## 我
   叫我小成师傅就好了。菜的抠脚的GISer。
 - ## 文章分类
-  [待续](https://github.com/xcsf/Hello_GitHub/new/master?readme=1)
+  [待续](https://github.com/xcsf/Hello_GitHub)
