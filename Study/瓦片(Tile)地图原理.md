@@ -6,11 +6,13 @@
 
 **一些基本特性：**
 
-   	1. [参考椭球](https://zh.wikipedia.org/wiki/%E5%8F%82%E8%80%83%E6%A4%AD%E7%90%83%E4%BD%93)：WGS84
-   	2. 投影：[墨卡托投影](https://zh.wikipedia.org/wiki/%E9%BA%A5%E5%8D%A1%E6%89%98%E6%8A%95%E5%BD%B1%E6%B3%95)、[Web_Mercator](https://en.wikipedia.org/wiki/Mercator_projection#Web_Mercator)
-   	3. 当经度范围在[-180,180]，投影为正方形时，纬度范围：[-85.05113, 85.05113]
-   	4. 图片大小：256*256
-   	5. 图片格式：jpg[有损压缩率高、不透明]   png[无损、透明]
+   1. [参考椭球](https://zh.wikipedia.org/wiki/%E5%8F%82%E8%80%83%E6%A4%AD%E7%90%83%E4%BD%93)：WGS84
+   2. 投影：[墨卡托投影](https://zh.wikipedia.org/wiki/%E9%BA%A5%E5%8D%A1%E6%89%98%E6%8A%95%E5%BD%B1%E6%B3%95)、[Web_Mercator](https://en.wikipedia.org/wiki/Mercator_projection#Web_Mercator)
+   3. 当经度范围在[-180,180]，投影为正方形时，纬度范围：[-85.05113, 85.05113]
+
+   4. 图片大小：256*256
+
+   5. 图片格式：jpg[有损压缩率高、不透明]   png[无损、透明]
 
 ![瓦片原理图1](./img/瓦片原理图1.png)
 
@@ -121,7 +123,7 @@ var view = new SceneView({
 
 2. 将获取到的图片返回
 
-   ##### Modles：
+##### Modles：
 
 ```c#
 public string getImage(string mt, string version, string x, string y, string z)
