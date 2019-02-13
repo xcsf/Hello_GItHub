@@ -26,7 +26,7 @@
 
 ​	![XYto84](./img/XYto84.png)
 
-​	![84toXY](E:\demo\mygulu\xcsf\Study\img\84toXY.png)
+​	![84toXY](.\img\84toXY.png)
 
 #### 1）OpenStreetMap
 
@@ -36,11 +36,11 @@
 
 ​	**特性3:**图片（z,x,y）像素（m,n）[注：像素坐标以左上角为原点，x轴向右，y轴向下]的经纬度[单位：度]分别为：
 
-![osmBLtoXY1](E:\demo\mygulu\xcsf\Study\img\osmXYtoBL1.png)
+![osmBLtoXY1](.\img\osmXYtoBL1.png)
 
-![osmBLtoXY1](E:\demo\mygulu\xcsf\Study\img\osmXYtoBL2.png)
+![osmBLtoXY1](.\img\osmXYtoBL2.png)
 
-![osmBLtoXY](E:\demo\mygulu\xcsf\Study\img\osmBLtoXY.png)
+![osmBLtoXY](.\img\osmBLtoXY.png)
 
 #### 2）Google Map
 
