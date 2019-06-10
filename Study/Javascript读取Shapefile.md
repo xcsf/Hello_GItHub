@@ -1,6 +1,4 @@
-### Javascript读取Shapefile教程
-
-
+## Javascript读取Shapefile教程
 
 #### 一、Shapefile 简介
 
