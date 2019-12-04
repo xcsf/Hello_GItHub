@@ -17,6 +17,10 @@
 
 **球心坐标系(ECEF,Earth-Centered，Earth-Fixed):** 以地球为中心,坐标轴以International Reference Pole(IRM)和International Reference Meridian(IRM)为准，国际参考极点和国际参考子午线，遵照地表所确定。(earth-fixed)
 
+[See docs.inertialsense.com](https://docs.inertialsense.com/user-manual/reference/coordinate_frames/)
+
+
+
 ![](./img/ECEFandNED.jpg)
 ### 三、平移、旋转、缩放
 要用变换矩阵用来表示平移，需要将原本为(x,y,z)的点加上一维，即(x,y,z,w)这种四元组的方式来表达坐标，称为 **(齐次坐标)**。
