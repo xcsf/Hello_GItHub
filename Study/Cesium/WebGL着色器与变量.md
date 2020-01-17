@@ -1,8 +1,6 @@
 ## WebGL着色器与变量
 ### 着色器(shader)
 
-
-
 ### 1.顶点着色器(Vertex shader)
 
 > 用于描述顶点特性（如颜色、位置等）。顶点指的是二维或者三维空间中的的一个点。
@@ -27,11 +25,11 @@
 
 将位置信息从JavaScript程序中传给顶点着色器。可以通过**attribute变量**和**uniform变量**。
 
-**attribute变量：**传输与顶点相关数据。给顶点着色器使用。只能是vec2,vec3,vec4,float,mat2,mat3,mat4类型。
+**attribute变量：** 传输与顶点相关数据。给顶点着色器使用。只能是vec2,vec3,vec4,float,mat2,mat3,mat4类型。最少支持8个。必须全局。
 
-**uniform变量：**对于顶点相同的数据（与顶点无关）。给片元着色器使用。
+**uniform变量：** 对于顶点相同的数据（与顶点无关）。给片元着色器使用。顶点着色器中最少支持128个，片元着色器中最少支持16个。必须全局。
 
-**声明（例）：** 
+**声明（例）：**
 
 ```js
 attribute vec4 a_Position;
@@ -77,7 +75,7 @@ gl.uniform4fv(u_FragColor,color)
 
 **着色器初始化:**
 
-着色器程序由**OpenGL ES着色器语言(GLSL ES)**编写。在JavaScript以字符串形式编写，传给WebGL系统。
+着色器程序由**OpenGL ES着色器语言(GLSL ES)** 编写。在JavaScript以字符串形式编写，传给WebGL系统。
 
 ```javascript
 let VSHADER_SOURCE =
