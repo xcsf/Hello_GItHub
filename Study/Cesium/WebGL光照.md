@@ -1,4 +1,12 @@
-## 光照
+---
+title: 	WebGL光照
+date: 2020-06-12 18:35:58
+tags: WebGL
+categories:
+ - WebGL
+ - 笔记
+---
+
 
 **光源类型：**平行光、点光光源、环境光。
 

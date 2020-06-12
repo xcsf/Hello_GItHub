@@ -1,4 +1,11 @@
-## Cesium与几何变换
+---
+title: Cesium与几何变换
+date: 2020-06-12 18:44:46
+tags: Cesium
+categories:
+ - GIS 
+ - Cesium
+---
 ### 一、了解模型矩阵、视图矩阵、投影矩阵
 
 计算机在显示一个三维物体时，本质都是对相应的 **顶点** 坐标进行计算，进而渲染出图元、片元，得到显示屏上看到的结果。
@@ -21,7 +28,7 @@
 
 
 
-![](./img/ECEFandNED.jpg)
+![](/img/ECEFandNED.jpg)
 ### 三、平移、旋转、缩放
 要用变换矩阵用来表示平移，需要将原本为(x,y,z)的点加上一维，即(x,y,z,w)这种四元组的方式来表达坐标，等同于三维坐标(x/w,y/w,z/w)，称为 **(齐次坐标)**。
 > 齐次坐标系使得我们可以在一中特殊的方程组中求出解，这个方程组中每一个方程都表示一个与系统中其他直线平行的直线。我们知道在欧几里得空间中，对这种方程组是无解的，因为他们没有交点。然而在现实世界中我们是可以看到两条平行线相交的。
@@ -29,23 +36,23 @@
 >规定（x, y, z, 0）表示一个向量，（x, y, z, 1）或（x', y', z', 2）等w不为0时来表示点。
 
 对于平移变换矩阵:
-![](.\img\translationmatrix.png)
+![平移变换矩阵](/img/translationmatrix.png)
 
 对于X旋转变换矩阵:
 
-![](.\img\rotationmatrixX.png)
+![X旋转变换矩阵](/img/rotationmatrixX.png)
 
 对于Y旋转变换矩阵:
 
-![](.\img\rotationmatrixY.png)
+![Y旋转变换矩阵](/img/rotationmatrixY.png)
 
 对于Z旋转变换矩阵:
 
-![](.\img\rotationmatrixZ.png)
+![Z旋转变换矩](/img/rotationmatrixZ.png)
 
 对于缩放变换矩阵:
 
-![](.\img\scalarmatrix.png)
+![缩放变换矩阵](/img/scalarmatrix.png)
 
 对于任意轴旋转:
 
@@ -65,9 +72,9 @@
 
 反向旋转平移回去，得到结果。即绕Y轴旋转角度为β；绕X轴转角度为-α；反向平移。
 
-![](.\img\anyrotation.jpg)
+![](/img/anyrotation.jpg)
 
 如果不需要平移，最终结果公式为：
 
-![](.\img\anyrotationresult.gif)
+![](/img/anyrotationresult.gif)
 

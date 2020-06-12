@@ -1,4 +1,12 @@
-## WebGL着色器与变量
+---
+title: WebGL着色器与变量
+date: 2020-06-12 18:35:58
+tags: WebGL
+categories:
+ - WebGL
+ - 笔记
+---
+
 ### 着色器(shader)
 
 ### 1.顶点着色器(Vertex shader)
@@ -19,7 +27,7 @@
 >
 > vec4 gl_FragColor 指定片元颜色(RGBA格式)
 
-![绘制过程](./img/shader.png)
+![绘制过程](/img/shader.png)
 
 ### 3.使用着色器的WebGL程序
 

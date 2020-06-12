@@ -1,4 +1,11 @@
-## WebGL加载纹理
+---
+title: WebGL加载纹理
+date: 2020-06-12 18:35:58
+tags: WebGL
+categories:
+ - WebGL
+ - 笔记
+---
 
 ### WebGL坐标系统和纹理坐标
 
@@ -117,8 +124,8 @@ image.src = require("@/assets/sky.jpg");
 
 [WebGLRenderingContext.pixelStorei()](https://developer.mozilla.org/zh-CN/docs/Web/API/WebGLRenderingContext/pixelStorei)
 
-![WebGL_TexCoord](./img/WebGL_TexCoord.png)
-![Image_Coord](./img/Image_Coord.png)
+![WebGL_TexCoord](/img/WebGL_TexCoord.png)
+![Image_Coord](/img/Image_Coord.png)
 
 **激活纹理单元(texture unit)**
 

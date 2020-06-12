@@ -1,4 +1,11 @@
-## WebGL缓冲区对象
+---
+title: WebGL缓冲区
+date: 2020-06-12 18:35:58
+tags: WebGL
+categories:
+ - WebGL
+ - 笔记
+---
 
 ### 缓冲区对象
 

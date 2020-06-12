@@ -1,4 +1,11 @@
-## 高级技术
+---
+title: WebGL高级技术
+date: 2020-06-12 18:35:58
+tags: WebGL
+categories:
+ - WebGL
+ - 笔记
+---
 
 ### 物体旋转
 

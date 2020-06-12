@@ -1,4 +1,11 @@
-### WebGL优化方法
+---
+title: WebGL优化方法
+date: 2020-06-12 18:35:58
+tags: WebGL
+categories:
+ - WebGL
+ - 笔记
+---
 
 > 1. 找到性能瓶颈，尝试降低CPU或者GPU的时钟频率去测试哪个效率低
 >
