@@ -1,0 +1,1144 @@
+﻿/*!
+ * application.Map.js 1.0
+ * arcgis 地图 公用操作api
+ * 
+ * 
+ */
+
+
+define(["dojo/_base/declare",
+    "esri/config",
+    "esri/Map",
+    "esri/views/MapView",
+    "esri/views/SceneView",
+    "esri/geometry/Extent",
+    "esri/layers/GraphicsLayer",
+    "esri/layers/FeatureLayer",
+    "szdtmap/OrthophotoLayer",
+    "szdtmap/TDmapLayer",
+    "szdtmap/TDmapOfflineLayer",
+    "esri/widgets/LayerList",
+    "esri/layers/IntegratedMeshLayer",
+    "esri/layers/ElevationLayer",
+    "esri/layers/SceneLayer",
+    "esri/layers/GroupLayer",
+    "esri/layers/ClusterLayer",
+    "esri/widgets/DistanceMeasurement2D",
+    "esri/widgets/AreaMeasurement2D",
+    "esri/widgets/DirectLineMeasurement3D",
+    "esri/widgets/AreaMeasurement3D",
+    "esri/widgets/Slice",
+    "esri/Graphic",
+    "esri/symbols/TextSymbol",
+    "esri/widgets/Sketch/SketchViewModel",
+    "esri/geometry/SpatialReference",
+    "esri/geometry/support/webMercatorUtils",
+    "esri/geometry/geometryEngine",
+    "esri/identity/IdentityManager",
+    "dojo/domReady!"
+],
+
+    function (declare, esriConfig, Map, MapView, SceneView, Extent, GraphicsLayer, FeatureLayer, OrthophotoLayer, TDmapLayer, TDmapOfflineLayer, LayerList, IntegratedMeshLayer, ElevationLayer,
+        SceneLayer, GroupLayer, ClusterLayer, DistanceMeasurement2D, AreaMeasurement2D, DirectLineMeasurement3D, AreaMeasurement3D, Slice, Graphic, TextSymbol,
+        SketchViewModel, SpatialReference, webMercatorUtils, geometryEngine, esriId) {
+
+        let graphicsLayers = [];
+        let drawLyrId = "drawLyrId";
+
+        const pi = 3.14159265358979324;
+        const x_pi = 3.14159265358979324 * 3000.0 / 180.0;
+
+        declare("map.Draw", null, {
+            appMap: null,
+            view: null,
+            drawTool: null,
+            mapType: null, //地图二三维类型
+            editTool: null,
+            spatialReference: null,
+            elementInfos: [],
+            constructor: function (map, view, spatialReference, mapType) {
+
+                this.spatialReference = spatialReference;
+                this.mapType = mapType;
+                if (!map) {
+                    console.log("未设置地图对象!");
+                    return;
+                }
+                //esriConfig.request.proxyUrl = "http://webgis.szmedi.com.cn:88/proxy/proxy.ashx";
+                //esriConfig.portalUrl = "https://gisportal.szmedi.com.cn/";
+                //esriConfig.request.corsEnabledServers.push("webgis.szmedi.com.cn");
+                //esriConfig.request.corsEnabledServers.push("gisportal.szmedi.com.cn");
+                //esriConfig.request.corsEnabledServers.push("survey.szmedi.com.cn");
+                this.appMap = map;
+                this.view = view;
+            },
+
+            //画一个图标点
+            //            "x": locationPoint.x, 不为空
+            //            "y": locationPoint.y,  不为空
+            //let options = {
+            //        layerid:图形图层id
+            //            "symbolUrl" 付号 //可为空
+            //             symbolStyle :{width:24,height:24, angle:0,r:0,g:0,b:0,a:1,xOffset,yOffset }
+            //            "callBack" 图标的单击事件 //可为空
+            //            "attributes" 图标的属性值，可为空
+            //             maxScale:0
+            //             minScale:0
+            //        };
+            drawPoint: function (x, y, z, options) {
+                if (x == "" || y == "" || isNaN(x) || isNaN(y)) {
+                    console.log("坐标值未设置!");
+                    return;
+                }
+
+                let myGraphicsLayer = getGraphicsLayer(this.appMap, options && options.layerid, options && options.index);
+                //默认
+                let symbol = {
+                    type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+                    color: [226, 119, 40],
+                    outline: { // autocasts as new SimpleLineSymbol()
+                        color: [255, 255, 255],
+                        width: 2
+                    }
+                };
+                //设置图片图标
+                if (options && options.symbolUrl) {
+                    symbol = {
+                        type: "picture-marker", // autocasts as new PictureMarkerSymbol()
+                        url: options.symbolUrl,
+                        width: "24px",
+                        height: "24px"
+                    };
+                    if (options.symbolStyle) {
+                        if (options.symbolStyle.height) {
+                            symbol.height = options.symbolStyle.height;
+                        }
+                        if (options.symbolStyle.width) {
+                            symbol.width = options.symbolStyle.width;
+                        }
+                        if (options.symbolStyle.angle)
+                            symbol.angle = options.symbolStyle.angle;
+                    }
+                }
+
+                if (this.mapType == "2D") {
+                    //This property is currently not supported in 3D SceneViews.
+                    if (options && options.symbolStyle && !isNaN(options.symbolStyle.xOffset) && !isNaN(options.symbolStyle.yOffset)) {
+                        symbol.xOffset = options.symbolStyle.xOffset;
+                        symbol.yOffset = options.symbolStyle.yOffset;
+                    }
+                }
+                //图标点击事件
+                if (options && options.callBack) {
+                    myGraphicsLayer.callBack = options.callBack;
+                }
+
+                if (options && options.maxScale)
+                    myGraphicsLayer.maxScale = options.maxScale;
+                if (options && options.minScale)
+                    myGraphicsLayer.minScale = options.minScale;
+
+                //添加图形
+                let point = {
+                    type: "point",
+                    longitude: x,
+                    latitude: y,
+                    spatialReference: this.spatialReference
+                };
+                if (this.mapType == "3D") {
+                    point = {
+                        type: "point",
+                        x: x,
+                        y: y,
+                        z: z,
+                        spatialReference: this.spatialReference
+                    };
+                }
+
+                let graphic = new Graphic({
+                    geometry: point,
+                    symbol: symbol
+                });
+                if (options && options.attributes)
+                    graphic.attributes = options.attributes;
+
+
+                myGraphicsLayer.add(graphic);
+            },
+            //画线  points:[{x:114,y:24,z:100},.....], options={ layerid:图形图层id,
+            //isDashdot:true/false,style:{ r:0,g:0,b:255,a:0.75,width:3  },
+            //isMoveToLine:true/false }
+            drawLine: function (points, options) {
+
+                if (!points || points.length < 2) {
+                    console.log("坐标值未设置!");
+                    return;
+                }
+
+                let myGraphicsLayer = getGraphicsLayer(this.appMap, options && options.layerid, options && options.index);
+
+                if (options && options.callBack)
+                    myGraphicsLayer.callBack = options.callBack;
+
+                let path = [];
+                for (let n = 0; n < points.length; n++) {
+                    let p = points[n];
+                    if (this.mapType == "2D") {
+                        path.push([p.x, p.y]);
+                    } else {
+                        path.push([p.x, p.y, p.z]);
+                    }
+                }
+
+                let polyline = {
+                    type: "polyline", // autocasts as new Polyline()
+                    paths: path
+                };
+
+                let lineSymbol = {
+                    type: "simple-line", // autocasts as SimpleLineSymbol()
+                    color: [226, 119, 40],
+                    width: 2
+                };
+                let style = options && options.style || null;
+                if (style) {
+                    lineSymbol.color = [
+                        [style.r, style.g, style.b, style.a]
+                    ];
+                    lineSymbol.width = options.style.width;
+                }
+
+                let polylineGraphic = new Graphic({
+                    geometry: polyline,
+                    symbol: lineSymbol
+                });
+
+                //设置图标属性信息模板
+                polylineGraphic.attributes = options && options.attributes || null;
+                myGraphicsLayer.add(polylineGraphic);
+
+                //缩放到线
+                if (options && options.isMoveToLine) {
+                    this.view.extent = polylineGraphic.geometry.extent;
+                }
+                return polylineGraphic;
+
+            },
+            // 画多边形
+            //points:[[114,24],.....] 
+            //option={ layerid:图形图层id,
+            //lineStyle: { r: 0, g: 0, b: 255, a: 0.75, width: 3,isDashdot:true/false}, 
+            //fillPicUrl::/images/mangrove.png, //图片优先，没有图片，就默认
+            //fillStyle:{ style: "STYLE_SOLID" , r: 0, g: 0, b: 255, a: 0.75, }
+            //isMoveTo:true/false,  callBack:function(e){} 
+            // attributes:特性}
+            drawPolygon: function (points, option) {
+
+                let myGraphicsLayer = getGraphicsLayer(this.appMap, option && option.layerid, option && option.index);
+                if (option && option.callBack)
+                    myGraphicsLayer.callBack = option.callBack;
+
+                if (!points || points.length <= 2) {
+                    console.log("至少需要三个顶点坐标!");
+                    return;
+                }
+                let ring = [];
+                if (Array.isArray(points[0])) {
+                    ring = points;
+                } else {
+                    for (i = 0; i < points.length; i++) {
+                        let p = points[i];
+                        if (this.mapType == "2D")
+                            ring.push([p.x, p.y]);
+                        else
+                            ring.push([p.x, p.y, p.z]);
+                    }
+                }
+
+                let polygon = {
+                    type: "polygon", // autocasts as new Polygon()
+                    rings: ring
+                };
+
+                let fillSymbol = {
+                    type: "simple-fill", // autocasts as new SimpleFillSymbol()
+                    color: [227, 139, 79, 0.8],
+                    outline: { // autocasts as new SimpleLineSymbol()
+                        color: [255, 255, 255],
+                        width: 2
+                    }
+                };
+
+                if (option && option.fillStyle) {
+                    let fillStyle = option.fillStyle;
+                    fillSymbol.color = [fillStyle.r, fillStyle.g, fillStyle.b, fillStyle.a];
+                }
+
+                if (option && option.lineStyle) {
+                    if (option.lineStyle.width) {
+                        fillSymbol.outline.width = option.lineStyle.width;
+                    }
+                    fillSymbol.outline.color = [option.lineStyle.r, option.lineStyle.g, option.lineStyle.b, option.lineStyle.a];
+                }
+                let polygonGraphic = new Graphic({
+                    geometry: polygon,
+                    symbol: fillSymbol
+                });
+
+                //设置图标属性信息模板
+                polygonGraphic.attributes = option && option.attributes || null;
+                myGraphicsLayer.add(polygonGraphic);
+
+                //缩放到面
+                if (option && option.isMoveTo) {
+                    this.view.extent = polygonGraphic.geometry.extent;
+                }
+
+                return polygonGraphic;
+
+            },
+            //画文本信息 title :text, x:0,y:0,z:0, options={ layerid:layerid, style:{ size:14,r:255,g:0,b:0,xOffset:0,yOffset:0},halostyle:{size:1,r:255,g:0,b:0}  }
+            drawText: function (lbltext, x, y, z, options) {
+                let txtGraphicsLayer = getGraphicsLayer(this.appMap, options && options.layerid, options && options.index);
+                let size = 12;
+                if (options && options.style && options.style.size) {
+                    size = options.style.size;
+                }
+
+                let point = {
+                    type: "point",
+                    longitude: x,
+                    latitude: y,
+                    spatialReference: this.spatialReference
+                };
+                if (this.mapType == "3D") {
+                    point = {
+                        type: "point",
+                        x: x,
+                        y: y,
+                        z: z,
+                        spatialReference: this.spatialReference
+                    };
+                }
+
+                let textSymbol = {
+                    //type: "text",  // autocasts as new TextSymbol()
+                    text: lbltext,
+                    haloColor: [255, 0, 0],
+                    haloSize: 2,
+                    color: [255, 255, 255],
+                    font: { // autocast as new Font()
+                        family: "sans-serif",
+                        size: size
+                    }
+                };
+                let textsyb = new TextSymbol(textSymbol);
+
+                if (options && options.style) {
+                    if (options.style.r >= 0 && options.style.g >= 0 && options.style.b >= 0)
+                        textsyb.color = [options.style.r, options.style.g, options.style.b, options.style.a];
+                }
+                if (options && !isNaN(options.xOffset) && !isNaN(options.yOffset)) {
+                    textsyb.xoffset = options.xOffset;
+                    textsyb.yOffset = options.yOffset;
+                }
+                if (options && options.halostyle) {
+                    let color1 = [options.halostyle.r, options.halostyle.g, options.halostyle.b, options.halostyle.a];
+                    textsyb.haloColor = color1;
+                    textsyb.haloSize = options.halostyle.size || 1;
+
+                }
+
+                let txtgraphic = new Graphic({
+                    geometry: point,
+                    symbol: textsyb
+                });
+                //设置图标属性信息模板
+                if (options && options.attributes)
+                    txtgraphic.attributes = options.attributes;
+
+                txtGraphicsLayer.add(txtgraphic);
+                return txtgraphic;
+
+            },
+            //清除图标 layerid :图层id
+            clearGraphics: function (layerid) {
+                let myGraphicsLayer;
+                //设置图形图层
+                if (layerid) {
+                    myGraphicsLayer = this.appMap.findLayerById(layerid);
+                } else
+                    myGraphicsLayer = this.appMap.findLayerById(drawLyrId);
+
+                if (myGraphicsLayer)
+                    myGraphicsLayer.removeAll();
+            },
+            //激活画点，线，面工具 drawEndFunc 回调
+            startDrawTool: function (drawEndFunc) {
+
+            },
+            //图形编辑
+            activateGraphicEdit: function (graphic) {
+                if (graphic) {
+
+                }
+            }
+        });
+
+        return declare("szdt.Map", null, {
+            mapConfig: null,
+            gisUrl: null,
+            appMap: null,
+            view: null,
+            serveisName: null,
+            mapType: null,
+            drawApi: null,
+            spatialReference: null,
+            baseMapToggleType: null, //记录当前是影像图还是道路
+            stamenTileLayer: null,
+            vectorLayer: null,
+            clickMapPoint: null,
+            geometryEngine: null,
+            clusterLayer: null,
+            //op={
+            //mapDivId :地图 div id
+            constructor: function (mapType, op) {
+                this.gisUrl = op.gisUrl;
+                this.mapConfig = op;
+                if (!mapType) {
+                    console.log("地图类型没设置");
+                    return;
+                };
+
+                this.mapType = mapType;
+                this.serveisName = op.serveisName;
+
+                if (!op.mapDivId) {
+                    console.log("未设置地图Div");
+                    return;
+                };
+                this.spatialReference = new SpatialReference({
+                    wkid: 4326
+                }); // 经伟度
+                if (op.spatialReference == 0) {
+                    this.spatialReference = new SpatialReference({
+                        wkid: 102113
+                    }); // 莫卡托
+                }
+
+                esriConfig.portalUrl = "https://szsz.com/";
+                esriConfig.request.corsEnabledServers.push("szsz.com");
+                if (op.token) {
+                    esriId.registerToken(op.token);
+                }
+
+                var centerAt = [114.05, 22.54];
+                if (op.centerAt) {
+                    centerAt = op.centerAt;
+                }
+
+                if (mapType == "3D") {
+                    let mapconfig = {};
+                    if (op.worldelevation) {
+                        mapconfig.ground = "world-elevation";
+                    }
+                    this.appMap = new Map(mapconfig); //加入高程 {ground: "world-elevation"}
+                    this.view = new SceneView({
+                        container: op.mapDivId,
+                        map: this.appMap,
+                        center: centerAt,
+                        zoom: 13
+                    });
+
+                    if (op && op.viewGround) {
+                        let self = this;
+                        //查看地表以下图层
+                        this.view.when(function () {
+                            self.appMap.ground.navigationConstraint = {
+                                type: "none"
+                            };
+                            self.appMap.ground.surfaceColor = "#fff";
+                            self.appMap.ground.opacity = 1;
+                        });
+                    }
+
+                } else {
+                    this.appMap = new Map({
+                        //basemap: "satellite"
+                    });
+                    this.view = new MapView({
+                        container: op.mapDivId,
+                        map: this.appMap,
+                        zoom: 13,
+                        center: centerAt
+                    });
+                }
+
+                //图层上的点击事件
+                let view = this.view;
+                let self = this;
+                this.drawApi = new map.Draw(this.appMap, this.view, this.spatialReference, mapType);
+                this.view.on("click", function (event) {
+                    let result = view.hitTest(event.screenPoint);
+                    result.then(function (response) {
+                        if (response.results.length) {
+                            //let graphic = response.results.filter(function(result) {
+                            //	return result.graphic.layer === graphicsLayer;
+                            // });
+                            //console.log(graphic);
+                            self.clickMapPoint = response.results[0].mapPoint;
+                            if (response.results[0].graphic && response.results[0].graphic.layer.callBack) {
+                                response.results[0].event = event;
+                                response.results[0].graphic.layer.callBack(response.results[0]);
+                            }
+                        }
+                    });
+                });
+
+                this.geometryEngine = geometryEngine;
+            },
+            //设置坐标系 isLngLat=1: 经伟度,isLngLat=0:莫卡托
+            setSpatialReference: function (isLngLat) {
+                if (isLngLat)
+                    this.spatialReference = new SpatialReference(4326);
+                else
+                    this.spatialReference = new SpatialReference(102113); //102113, 102100, 3857.
+
+                this.drawApi.spatialReference = this.spatialReference;
+            },
+            getSpatialReference: function () {
+                return this.spatialReference;
+            },
+            //添加一个图形图层
+            newGraphicLayer: function (layerid) {
+                if (layerid)
+                    return getGraphicsLayer(this.appMap, layerid);
+            },
+            // 图例列表
+            showLayerListPnale: function (position) {
+                let layerList = new LayerList({
+                    view: this.view,
+                });
+                this.view.ui.add(layerList, position);
+            },
+            //创建要素层
+            //layerName:"图层名", options={ showLabels:true,opacity:0.5, maxScale :0,minScale :0, index:图层顺序
+            // definitionExpression: "unitid=1" }
+            addFeatureLayer: function (layerName, options) {
+
+                let lyrid = getLayerServeridByName(this.mapConfig.layerInfo2D, layerName);
+                if (!lyrid && lyrid != 0) {
+                    console.log("未找到图层信息!");
+                    return;
+                }
+
+                if (!this.gisUrl) {
+                    console.log("gis服务器地址未设置");
+                    return;
+                }
+
+                let url = this.gisUrl + this.serveisName + "/MapServer/" + lyrid;
+                let layer = new FeatureLayer({
+                    url: url
+
+                });
+
+                if (options && options.maxScale)
+                    layer.maxScale = options.maxScale;
+                if (options && options.minScale)
+                    layer.minScale = options.minScale;
+                layer.id = options.id;
+                //图层透明度
+                layer.opacity = options && options.opacity || 1;
+                if (options && options.index) {
+                    this.appMap.add(layer, options.index);
+                } else {
+                    this.appMap.add(layer);
+                }
+                layer.callBack = options && options.callBack || null;
+
+                if (options && options.elevationInfo) {
+                    layer.elevationInfo = {
+                        mode: "relative-to-ground"
+                    }; ///on-the-ground
+                    layer.featureReduction = {
+                        type: "selection"
+                    };
+                }
+
+                return layer;
+            },
+            //添加聚合图层
+            addClusterLayer: function (data, options) {
+                const lyrid = options.layerid || "clusterlyrid";
+                const labelColor = options.labelColor || "#fff"; //#000
+                const distance = options.distance || 0.001;
+                const labelOffset = options.labelOffset || -4;
+
+                const graphicSym = {
+                    type: "simple-marker",
+                    color: [226, 119, 40],
+                    size: "10px",
+                    outline: { // autocasts as new SimpleLineSymbol()
+                        color: [255, 255, 255],
+                        width: 1
+                    }
+                };
+
+                const clusterRed = {
+                    type: "picture-marker",
+                    url: "./static/images/map/Red.png",
+                    width: "48px",
+                    height: "48px"
+                };
+                const clusterBlue = {
+                    type: "picture-marker",
+                    url: "./static/images/map/Blue.png",
+                    width: "64px",
+                    height: "64px"
+                };
+                const clusterGreen = {
+                    type: "picture-marker",
+                    url: "./static/images/map/Green.png",
+                    width: "64px",
+                    height: "64px"
+                };
+
+                let clusterLayer = new ClusterLayer({
+                    "view": this.view,
+                    "map": this.appMap,
+                    "distance": distance,
+                    "data": data,
+                    "id": lyrid,
+                    "labelColor": labelColor,
+                    "labelOffset": labelOffset,
+                    "graphicSym": graphicSym,
+                    "symbolArray": [clusterGreen, clusterBlue, clusterRed]
+
+                });
+
+                this.appMap.add(clusterLayer);
+
+                this.clusterLayer = clusterLayer;
+                this.clusterLayer.excuseClusterEvent();
+
+                this.clusterLayer.callBack = function (e) {
+                    console.log(e);
+                    const data = clusterLayer.onClick(e.graphic);
+                };
+
+                if (options && options.maxScale)
+                    this.clusterLayer.maxScale = options.maxScale;
+                if (options && options.minScale)
+                    this.clusterLayer.minScale = options.minScale;
+
+                return this.clusterLayer;
+            },
+            //添加三维发布的模型场景
+            addSceneLayer: function (options, clickCallback) {
+                if (this.mapType == "2D") {
+                    console.log("当前地图不支持二维地图.");
+                    return;
+                }
+
+                if (!this.gisUrl) {
+                    console.log("gis服务器地址未设置");
+                    return;
+                }
+
+
+                let self = this;
+                //点击事件
+                if (clickCallback) {
+                    //options.popupEnabled = true;
+                    options.popupTemplate = {
+                        title: "标题",
+                        content: function (feature) {
+                            let ele = document.querySelector(".esri-popup");
+                            ele.style.display = "none";
+                            feature.mapPoint = self.clickMapPoint;
+                            clickCallback(feature);
+                        }
+                    }
+                }
+
+                options.url = this.gisUrl + "Hosted/" + options.urlServerName + "/SceneServer";
+                let layer = new SceneLayer(options);
+                this.appMap.add(layer);
+                return layer;
+            },
+            //添加三维发布的模型场景
+            addIntegratedMeshLayer: function (options, clickCallback) {
+                if (this.mapType == "2D") {
+                    console.log("当前地图不支持二维地图.");
+                    return;
+                }
+
+                if (!this.gisUrl) {
+                    console.log("gis服务器地址未设置");
+                    return;
+                }
+                let self = this;
+                //点击事件
+                if (clickCallback) {
+                    //options.popupEnabled = true;
+                    options.popupTemplate = {
+                        title: "标题",
+                        content: function (feature) {
+                            let ele = document.querySelector(".esri-popup");
+                            ele.style.display = "none";
+                            feature.mapPoint = self.clickMapPoint;
+                            clickCallback(feature);
+                        }
+                    }
+                }
+                options.url = this.gisUrl + "Hosted/" + options.urlServerName + "/SceneServer";
+                let layer = new IntegratedMeshLayer(options);
+                this.appMap.add(layer);
+                return layer;
+            },
+            //正射影像
+            addOrthophotoMap: function (mapType, version, isclear) {
+                !isclear && this.appMap.layers.items.forEach(item => {
+                    let id = this.orthophotoLayer && this.orthophotoLayer.stamenTileLayer.id
+                    console.log(id)
+                    if (item.id === id) {
+                        this.appMap.remove(item);
+                        return false;
+                    }
+                });
+                this.orthophotoLayer = new OrthophotoLayer(this.appMap, mapType, version);
+                console.log('aaaaaaaaaaaaaa')
+            },
+            addElevationLayer: function (url) {
+                if (this.mapType == "2D") {
+                    console.log("当前地图不支持二维地图.");
+                    return;
+                }
+                if (!this.gisUrl) {
+                    console.log("gis服务器地址未设置");
+                    return;
+                }
+                let layer = new ElevationLayer({
+                    url: url
+                });
+                this.appMap.ground.layers.add(layer);
+                return layer;
+            },
+            //Create GroupLayer
+            createGroupLayer: function (arrLayer) {
+                let graphicGroupLayer = new GroupLayer({
+                    title: "graphicGroupLayer",
+                    visible: true,
+                    visibilityMode: "independent",
+                });
+                graphicGroupLayer.addMany(arrLayer);
+            },
+            //Create LayerList
+            addLayerList: function (containerID, funActions) {
+                //console.log("-------");
+                //console.log(this.view);
+                let layerlist = new LayerList({
+                    view: this.view,
+                    listItemCreatedFunction: funActions,
+                    container: containerID
+                });
+                this.view.ui.add(layerlist);
+                return layerlist;
+            },
+            //Create DistanceMeasurement2D
+            addDistanceMeasure2D: function (containerID) {
+                let dismeasurement2d = new DistanceMeasurement2D({
+                    view: this.view,
+                    container: containerID
+                });
+                this.view.ui.add(dismeasurement2d);
+                return dismeasurement2d;
+            },
+            //Create AreaMeasurement2D
+            addAreaMeasure2D: function (containerID) {
+                let areameasurement2d = new AreaMeasurement2D({
+                    view: this.view,
+                    container: containerID
+                });
+                this.view.ui.add(areameasurement2d);
+                return areameasurement2d;
+            }, //Create DistanceMeasurement3D
+            addDistanceMeasure3D: function (containerID) {
+                let dismeasurement3d = new DirectLineMeasurement3D({
+                    view: this.view,
+                    container: containerID
+                });
+                this.view.ui.add(dismeasurement3d);
+                return dismeasurement3d;
+            },
+            //Create AreaMeasurement3D
+            addAreaMeasure3D: function (containerID) {
+                let areameasurement3d = new AreaMeasurement3D({
+                    view: this.view,
+                    container: containerID
+                });
+                this.view.ui.add(areameasurement3d);
+                return areameasurement3d;
+            },
+            //Create Slice Tool
+            addSlice: function (containerID) {
+                let slicetool = new Slice({
+                    view: this.view,
+                    container: containerID
+                });
+                this.view.ui.add(slicetool);
+                return slicetool;
+            },
+
+
+            //天地图底图
+            addTDBaseMap: function (baseMapType, basemapToggleDiv, offline) {
+
+                this.baseMapToggleType = baseMapType;
+                if (offline) {
+                    this.stamenTileLayer = new TDmapOfflineLayer(this.appMap, "image");
+                    this.vectorLayer = new TDmapOfflineLayer(this.appMap, "vector");
+                }
+                else {
+                    this.stamenTileLayer = new TDmapLayer(this.appMap, "image");
+                    this.vectorLayer = new TDmapLayer(this.appMap, "vector");
+                }
+
+                if (this.baseMapToggleType == "image") {
+                    this.stamenTileLayer.setVisibility(true);
+                    this.vectorLayer.setVisibility(false);
+                } else {
+                    this.stamenTileLayer.setVisibility(false);
+                    this.vectorLayer.setVisibility(true);
+                }
+
+
+                let self = this;
+                let toggle = document.querySelector("#" + basemapToggleDiv);
+                let aSpan = document.querySelector("#" + basemapToggleDiv + " span");
+                if (toggle) {
+                    toggle.addEventListener('click', function (e) {
+                        if (self.baseMapToggleType == "image") {
+                            self.stamenTileLayer.setVisibility(false);
+                            self.vectorLayer.setVisibility(true);
+                            self.baseMapToggleType = "vector";
+                            aSpan.innerHTML = "道路图";
+                            toggle.style.backgroundImage = "url('./static/images/map/streets.jpg')";
+                        } else {
+                            self.stamenTileLayer.setVisibility(true);
+                            self.vectorLayer.setVisibility(false);
+                            self.baseMapToggleType = "image";
+                            aSpan.innerHTML = "影像图";
+                            toggle.style.backgroundImage = "url('./static/images/map/2D.png')";
+                        }
+                    })
+                }
+
+
+            },
+            //添加矢量地图 url:矢量图地址 
+            addDynamicMap: function (url) {
+
+            },
+            //添加图形
+            addGraphic: function (layerid, geometry, symbol) {
+                //let graphicsLayer = this.appMap.findLayerById(layerid);
+                let graphicsLayer = getGraphicsLayer(this.appMap, layerid);
+                if (!graphicsLayer) {
+                    console.log("找不到图层:" + layerid);
+                    return;
+                }
+                const graphic = new Graphic({
+                    geometry: geometry,
+                    symbol: symbol
+                });
+                graphicsLayer.add(graphic);
+                return graphic;
+            },
+            setBaseMapOpacity: function (value) {
+                this.stamenTileLayer.setOpacity(value);
+                this.vectorLayer.setOpacity(value);
+            },
+            //创建画图工具
+            creatSketchViewModel: function (pointSymbol, polylineSymbol, polygonSymbol, layerid) {
+                if (this.mapType == "3D") {
+                    console.log("当前地图不支持三维地图.");
+                    return;
+                }
+                if (!layerid) {
+                    layerid = "drawLayer";
+                }
+                let view = this.view;
+                let graphicsLayer = getGraphicsLayer(this.appMap, layerid, 10000);
+                let sketchViewModel = new SketchViewModel({
+                    view: view,
+                    layer: graphicsLayer,
+                    updateOnGraphicClick: false,
+                    pointSymbol: pointSymbol,
+                    polylineSymbol: polylineSymbol,
+                    polygonSymbol: polygonSymbol
+                });
+                return sketchViewModel;
+            },
+            //通过过坐标定位
+            zoomTobyXY: function (x, y, z, options) {
+
+                if (this.mapType == "3D") //三维
+                {
+                    let target = {
+                        position: {
+                            x: x,
+                            y: y,
+                            z: z,
+                            spatialReference: this.spatialReference
+                        },
+                        heading: options && options.targetheading || 0,
+                        tilt: options && options.targettitl || 0
+                    };
+                    let options1 = {
+                        speedFactor: options && options.speedFactor || 0.3,
+                        easing: options && options.easing || "out-quint"
+                    };
+                    this.view.goTo(target, options1);
+                } else {
+                    let zoom = 15;
+                    if (options && options.minZoom) {
+                        zoom = options.minZoom;
+                    }
+                    setTimeout(function () {
+                        this.view.zoom = zoom;
+                        this.view.center = [x, y + 0.008];
+                        //var ext = new Extent({
+                        //  xmin: x-0.001,
+                        //  ymin: y-0.001,
+                        //  xmax: x+0.001,
+                        //  ymax: y+0.001,
+                        //  spatialReference: this.spatialReference
+                        //});
+                        //this.view.extent = ext;
+                    }.bind(this), 500)
+
+                }
+            },
+            //莫卡托转经伟度
+            xyToLngLat: function (x, y) {
+                let _pLngLat = webMercatorUtils.xyToLngLat(x, y);
+                return _pLngLat;
+            },
+            //莫卡托转经伟度
+            lngLatToXY: function (lng, lat) {
+                let _pLngLat = webMercatorUtils.lngLatToXY(lng, lat);
+                return _pLngLat;
+            },
+            //火星==>百度
+            mars2Badiu: function (ggLngLat) {
+                let x = ggLngLat.lng,
+                    y = ggLngLat.lat;
+                let z = Math.sqrt(x * x + y * y) + 0.00002 * Math.sin(y * x_pi);
+                let theta = Math.atan2(y, x) + 0.000003 * Math.cos(x * x_pi);
+                let bd_lng = z * Math.cos(theta) + 0.0065;
+                let bd_lat = z * Math.sin(theta) + 0.006;
+
+                return {
+                    lng: bd_lng,
+                    lat: bd_lat
+                }
+            },
+            //百度==>火星
+            baidu2Mars: function (bdLngLat) {
+                let x = bdLngLat.lng - 0.0065,
+                    y = bdLngLat.lat - 0.006;
+                let z = Math.sqrt(x * x + y * y) - 0.00002 * Math.sin(y * x_pi);
+                let theta = Math.atan2(y, x) - 0.000003 * Math.cos(x * x_pi);
+                gg_lng = z * Math.cos(theta);
+                gg_lat = z * Math.sin(theta);
+
+                return {
+                    lng: gg_lng,
+                    lat: gg_lat
+                }
+            },
+            //通过经纬度查询两点间距离
+            getDistance: function (lat1, lng1, lat2, lng2) {
+
+                let EARTH_RADIUS = 6378.137; //赤道半径(单位km)  
+                function rad(d) {
+                    return d * Math.PI / 180.0;
+                };
+
+
+                let radLat1 = rad(lat1);
+                let radLat2 = rad(lat2);
+                let a = radLat1 - radLat2;
+                let b = rad(lng1) - rad(lng2);
+                let s = 2 * Math.asin(Math.sqrt(Math.pow(Math.sin(a / 2), 2) +
+                    Math.cos(radLat1) * Math.cos(radLat2) * Math.pow(Math.sin(b / 2), 2)));
+                s = s * EARTH_RADIUS;
+                s = Math.round(s * 10000) / 10000;
+                return s;
+            },
+            //获取中心点points:[[114, 24],[114,23].....]
+            getCenterPoint: function (points) {
+
+
+                if (!points) {
+                    console.log("至少需要1个点坐标!");
+                    return;
+                }
+
+                let centerPoint = {
+                    x: 0,
+                    y: 0
+                };
+
+                if (points.length == 1) {
+                    centerPoint = {
+                        x: points[0][0],
+                        y: points[0][1]
+                    }
+                } else if (points.length === 2) {
+
+                    let x = ((points[0][0] + points[0][1]) / 2).toFixed(6);
+                    let y = ((points[1][0] + points[1][1]) / 2).toFixed(6);
+
+                    centerPoint = {
+                        x: x,
+                        y: y
+                    };
+                } else if (points.length > 2) {
+                    let polygon = new Polygon(points);
+                    polygon.setSpatialReference(this.spatialReference);
+
+                    centerPoint = polygon.getExtent().getCenter();
+                } else {
+
+                    console.log("error:" + points);
+                }
+                return centerPoint;
+            },
+            //判断点是否在多边形内
+            isInPolygon: function (checkPoint, polygonPoints) {
+                let counter = 0;
+                let i;
+                let xinters;
+                let p1, p2;
+                let pointCount = polygonPoints.length;
+                p1 = polygonPoints[0];
+
+                for (i = 1; i <= pointCount; i++) {
+                    p2 = polygonPoints[i % pointCount];
+                    if (
+                        checkPoint[0] > Math.min(p1[0], p2[0]) &&
+                        checkPoint[0] <= Math.max(p1[0], p2[0])
+                    ) {
+                        if (checkPoint[1] <= Math.max(p1[1], p2[1])) {
+                            if (p1[0] != p2[0]) {
+                                xinters =
+                                    (checkPoint[0] - p1[0]) *
+                                    (p2[1] - p1[1]) /
+                                    (p2[0] - p1[0]) +
+                                    p1[1];
+                                if (p1[1] == p2[1] || checkPoint[1] <= xinters) {
+                                    counter++;
+                                }
+                            }
+                        }
+                    }
+                    p1 = p2;
+                }
+                if (counter % 2 == 0) {
+                    return false;
+                } else {
+                    return true;
+                }
+            },
+            //获取不规则多边形重心点(经纬度)
+            getCenterOfGravityPoint: function (mPoints) {
+                let area = 0.0; //多边形面积
+                let Gx = 0.0,
+                    Gy = 0.0; // 重心的x、y
+                for (let i = 1; i < mPoints.length; i++) {
+
+                    let iLat = mPoints[i % mPoints.length].y;
+                    let iLng = mPoints[i % mPoints.length].x;
+
+                    let nextLat = mPoints[i - 1].y;
+                    let nextLng = mPoints[i - 1].x;
+                    let temp = (iLat * nextLng - iLng * nextLat) / 2.0;
+                    area += temp;
+                    Gx += temp * (iLat + nextLat) / 3.0;
+                    Gy += temp * (iLng + nextLng) / 3.0;
+                }
+
+                Gx = Gx / area;
+                Gy = Gy / area;
+                return [Gy, Gx];
+            },
+            computeSignedArea: function (path) {
+                let radius = 6371009
+                let len = path.length;
+                if (len < 3) return 0;
+                let total = 0;
+                let prev = path[len - 1];
+                let prevTanLat = Math.tan(((Math.PI / 2 - prev[1] / 180 * Math.PI) / 2));
+                let prevLng = (prev[0]) / 180 * Math.PI;
+                for (let i in path) {
+                    let tanLat = Math.tan((Math.PI / 2 -
+                        (path[i][1]) / 180 * Math.PI) / 2);
+                    let lng = (path[i][0]) / 180 * Math.PI;
+                    //total += polarTriangleArea(tanLat, lng, prevTanLat, prevLng);
+                    let deltaLng = lng - prevLng;
+                    let t = tanLat * prevTanLat;
+                    total += 2 * Math.atan2(t * Math.sin(deltaLng), 1 + t * Math.cos(deltaLng));
+                    prevTanLat = tanLat;
+                    prevLng = lng;
+                }
+                return Math.abs(total * (radius * radius));
+            }
+
+        });
+
+
+        //根据图层名字获取serverid
+        function getLayerServeridByName(layerInfos, lyrName) {
+            let serverid;
+            for (i = 0; i < layerInfos.length; i++) {
+                let item = layerInfos[i];
+                if (item.layerName == lyrName) {
+                    serverid = item.serverId;
+                    return serverid;
+                }
+            }
+            return serverid;
+        }
+        //设置画点线面的图层
+        function getGraphicsLayer(m_map, id, index) {
+            //设置图形图层
+            let layerid = drawLyrId;
+            if (id)
+                layerid = id
+
+            let myGraphicsLayer = m_map.findLayerById(layerid);
+            if (!myGraphicsLayer) {
+                myGraphicsLayer = new GraphicsLayer({
+                    id: layerid
+                });
+                myGraphicsLayer.listMode = "hide";
+                graphicsLayers.push(myGraphicsLayer);
+                if (index >= 0) {
+                    m_map.add(myGraphicsLayer, index);
+                } else
+                    m_map.add(myGraphicsLayer);
+            }
+
+            return myGraphicsLayer;
+        }
+
+        function newGuid() {
+
+            let s4 = (((1 + Math.random()) * 0x10000) | 0).toString(16).substring(1);
+            return (s4 + s4 + "-" + s4 + "-" + s4 + "-" + s4 + "-" + s4 + s4 + s4);
+        }
+    }
+);
